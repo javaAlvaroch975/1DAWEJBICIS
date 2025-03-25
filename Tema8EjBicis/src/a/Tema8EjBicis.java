@@ -284,6 +284,7 @@ public class Tema8EjBicis {
 		textField_CB.setVisible(false);
 		btnComprobarYFinalizar.setVisible(false);
 
+		
 	}
 
 }
