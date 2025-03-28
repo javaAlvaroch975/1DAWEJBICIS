@@ -1,4 +1,4 @@
-package a;
+package tema8Alquiler;
 
 import java.awt.EventQueue;
 import java.sql.Connection;
@@ -14,6 +14,7 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -21,8 +22,10 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-class ConnectionSingleTon {
+class ConnectionSingleton {
 	private static Connection con;
 
 	public static Connection getConnection() throws SQLException {
@@ -43,6 +46,8 @@ public class Tema8EjBicis {
 	private JTextField textField_Name;
 	private JTextField textField_Edad;
 	private JTextField textField_CB;
+	private JTextField textFieldUsuario;
+	private JTextField textFieldBici;
 
 	boolean comprobarExpReg(String cadena, String patron) {
 		Pattern pat = Pattern.compile(patron);
@@ -87,14 +92,14 @@ public class Tema8EjBicis {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 
-		DefaultTableModel model = new DefaultTableModel();
-		model.addColumn("ID_usuario");
-		model.addColumn("Nombre");
-		model.addColumn("Edad");
-		model.addColumn("Cuenta_Bancaria");
+		DefaultTableModel modelUsuario = new DefaultTableModel();
+		modelUsuario.addColumn("ID_usuario");
+		modelUsuario.addColumn("Nombre");
+		modelUsuario.addColumn("Edad");
+		modelUsuario.addColumn("Cuenta_Bancaria");
 
 		try {
-			Connection con = ConnectionSingleTon.getConnection();
+			Connection con = ConnectionSingleton.getConnection();
 			Statement stmt = con.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT * FROM Usuarios");
 			while (rs.next()) {
@@ -104,43 +109,64 @@ public class Tema8EjBicis {
 				row[2] = rs.getInt("Edad");
 				row[3] = rs.getString("Cuenta_Bancaria");
 
-				model.addRow(row);
+				modelUsuario.addRow(row);
 			}
 		} catch (SQLException ex) {
 		}
 
-		JTable table = new JTable(model);
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		table.setBounds(71, 56, 146, 74);
-		JScrollPane scrollPane = new JScrollPane(table);
+		JTable table_Usuarios = new JTable(modelUsuario);
+		table_Usuarios.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int indice =table_Usuarios.getSelectedRow();
+				TableModel modelo = table_Usuarios.getModel();
+				
+				textFieldUsuario.setText(String.valueOf(modelo.getValueAt(indice, 0))); //Coger un campo que queremos
+
+			}
+
+		});
+		table_Usuarios.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		table_Usuarios.setBounds(71, 56, 146, 74);
+		JScrollPane scrollPane = new JScrollPane(table_Usuarios);
 		scrollPane.setBounds(76, 112, 367, 188);
 		frame.getContentPane().add(scrollPane);
 
 		// Tabla2
-		DefaultTableModel model2 = new DefaultTableModel();
-		model2.addColumn("ID_Bici");
-		model2.addColumn("Usuario_Asignado");
+		DefaultTableModel modelBicis = new DefaultTableModel();
+		modelBicis.addColumn("ID_Bici");
+		modelBicis.addColumn("Usuario_Asignado");
 
 		try {
-			Connection con1 = ConnectionSingleTon.getConnection();
+			Connection con1 = ConnectionSingleton.getConnection();
 			Statement stmt1 = con1.createStatement();
-			ResultSet rs1 = stmt1.executeQuery("SELECT * FROM Bicis");
-			while (rs1.next()) {
+			ResultSet rs1 = stmt1.executeQuery("SELECT * FROM Bicis  ORDER BY ID_Bici");
+			while (rs1.next()) { //Recorrer los campos y rellenar sus valores
 				Object[] row1 = new Object[2];
 				row1[0] = rs1.getInt("ID_Bici");
 				row1[1] = rs1.getInt("Usuario_Asignado");
 
-				model2.addRow(row1);
+				modelBicis.addRow(row1);
 			}
 		}
 
 		catch (SQLException ex) {
 		}
 
-		JTable table1 = new JTable(model2);
-		table1.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		table1.setBounds(71, 56, 146, 74);
-		JScrollPane scrollPane1 = new JScrollPane(table1);
+		JTable table_Bicis = new JTable(modelBicis);
+		table_Bicis.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int indice =table_Bicis.getSelectedRow();
+				TableModel modelo = table_Bicis.getModel();
+				
+				textFieldBici.setText(String.valueOf(modelo.getValueAt(indice, 0))); //Coger con el cick un campo que queremos
+				
+			}
+		});
+		table_Bicis.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		table_Bicis.setBounds(71, 56, 146, 74);
+		JScrollPane scrollPane1 = new JScrollPane(table_Bicis);
 		scrollPane1.setBounds(467, 112, 367, 188);
 		frame.getContentPane().add(scrollPane1);
 
@@ -205,7 +231,7 @@ public class Tema8EjBicis {
 
 					try {
 						// Añadir datos usuario
-						Connection con = ConnectionSingleTon.getConnection();
+						Connection con = ConnectionSingleton.getConnection();
 						PreparedStatement insUs = con
 								.prepareStatement("INSERT INTO Usuarios (Nombre,Edad,Cuenta_Bancaria) VALUES (?,?,?)");
 						String nombre = textField_Name.getText();
@@ -248,7 +274,7 @@ public class Tema8EjBicis {
 		btnAñadirBici.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					Connection con = ConnectionSingleTon.getConnection();
+					Connection con = ConnectionSingleton.getConnection();
 					PreparedStatement insPstmt = con.prepareStatement("INSERT INTO Bicis VALUES (null, 0)");
 					insPstmt.executeUpdate();
 					insPstmt.close();
@@ -267,14 +293,112 @@ public class Tema8EjBicis {
 		JButton btnNewAlquilar = new JButton("Alquilar");
 		btnNewAlquilar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				
+				int codp=table_Bicis.getSelectedRow();
+				TableModel model= table_Bicis.getModel();
+				
+				if ( (int) model.getValueAt(codp, 1) != 0) {
+					JOptionPane.showMessageDialog(frame, "No puedes alquilar una bici que ya está alquilada","Advertencia",JOptionPane.ERROR_MESSAGE);
+				}else {
+					String usuario=textFieldUsuario.getText();
+					String bici=textFieldBici.getText();
+					
+			
+					try {
+						Connection con =ConnectionSingleton.getConnection();
+						PreparedStatement comprobante = con.prepareStatement("SELECT COUNT(Usuario_Asignado) AS cuenta FROM Bicis WHERE Usuario_Asignado=?");	//Nota mental, asegurate de que el código es el del USUARIO
+						comprobante.setInt(1, Integer.parseInt(usuario));
+						ResultSet comprobar = comprobante.executeQuery();
+				
+						comprobar.next();
+
+						if (comprobar.getInt("cuenta")!=0) {	//Tienes que asegurarte de hacer el next de antemano. Y los alias tienen que hacerse bien
+							JOptionPane.showMessageDialog(frame, "No puedes alquilar más de una bicicleta","Advertencia",JOptionPane.ERROR_MESSAGE);
+						}else {
+						
+						PreparedStatement alquiler = con.prepareStatement("UPDATE Bicis SET Usuario_Asignado=? WHERE ID_Bici=?");  //Recorrer los campos y rellenar sus valores
+						alquiler.setString(1, usuario);
+						alquiler.setString(2, bici);
+						alquiler.executeUpdate();
+						alquiler.close();
+						JOptionPane.showMessageDialog(frame, "Se ha alquilado la bicicleta");
+						Statement muestrabici = con.createStatement();
+						ResultSet visualizarbici=muestrabici.executeQuery("SELECT * FROM Bicis ORDER BY ID_Bici");
+						modelBicis.setRowCount(0);
+						while(visualizarbici.next()) {
+							Object[] row = new Object [2];
+							row[0] = visualizarbici.getInt("ID_Bici");
+							row[1] = visualizarbici.getInt("Usuario_Asignado");
+							modelBicis.addRow(row);	
+						}
+						textFieldUsuario.setText("");
+						textFieldBici.setText("");
+						con.close();
+						}
+						
+						comprobante.close();
+						comprobar.close();
+					}catch (SQLException ex) {
+						JOptionPane.showMessageDialog(frame, ex.getMessage(),"Advertencia",JOptionPane.ERROR_MESSAGE);
+					}
 			}
+			}
+		
 		});
-		btnNewAlquilar.setBounds(371, 27, 154, 25);
+		btnNewAlquilar.setBounds(164, 24, 154, 25);
 		frame.getContentPane().add(btnNewAlquilar);
 		btnAñadirBici.setBounds(578, 60, 155, 25);
 		frame.getContentPane().add(btnAñadirBici);
 		btnAadirUsuario.setBounds(161, 60, 165, 25);
 		frame.getContentPane().add(btnAadirUsuario);
+		
+		JButton btnDevolver = new JButton("Devolver");
+		btnDevolver.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int codp=table_Bicis.getSelectedRow(); //Seleccionar elemento de la tabla
+				TableModel model= table_Bicis.getModel();
+				
+				if ( (int) modelBicis.getValueAt(codp, 1) == 0) {
+					JOptionPane.showMessageDialog(frame, "No puedes devolver una bici que no está alquilada","Advertencia",JOptionPane.ERROR_MESSAGE);
+				}else {
+					String bici=textFieldBici.getText();
+					
+					try {
+						Connection con =ConnectionSingleton.getConnection();
+						PreparedStatement devolver = con.prepareStatement("UPDATE Bicis  SET Usuario_Asignado=0 WHERE ID_Bici=?");
+						devolver.setString(1, bici);
+						devolver.executeUpdate();
+						devolver.close();
+						JOptionPane.showMessageDialog(frame, "Se ha devuelto la bicicleta");
+						Statement muestrabici = con.createStatement();
+						ResultSet visualizarbici=muestrabici.executeQuery("SELECT * FROM Bicis ORDER BY ID_Bici");
+						modelBicis.setRowCount(0);
+						while(visualizarbici.next()) {
+							Object[] row = new Object [2];
+							row[0] = visualizarbici.getInt("ID_Bici");
+							row[1] = visualizarbici.getInt("Usuario_Asignado");
+							modelBicis.addRow(row);	
+						}
+						textFieldBici.setText("");
+						con.close();
+					}catch (SQLException ex) {
+						JOptionPane.showMessageDialog(frame, ex.getMessage(),"Advertencia",JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			}
+		});
+		btnDevolver.setBounds(578, 25, 155, 23);
+		frame.getContentPane().add(btnDevolver);
+		
+		textFieldUsuario = new JTextField();
+		textFieldUsuario.setBounds(467, 331, 86, 20);
+		frame.getContentPane().add(textFieldUsuario);
+		textFieldUsuario.setColumns(10);
+		
+		textFieldBici = new JTextField();
+		textFieldBici.setBounds(588, 331, 86, 20);
+		frame.getContentPane().add(textFieldBici);
+		textFieldBici.setColumns(10);
 
 		lblNombre.setVisible(false);
 		lblEdad.setVisible(false);
@@ -285,6 +409,6 @@ public class Tema8EjBicis {
 		btnComprobarYFinalizar.setVisible(false);
 
 		
+	
 	}
-
 }
